@@ -1,35 +1,37 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState } from "react"
+import { useQuery } from "@tanstack/react-query"
+import { getBlogs } from "./api/blogs"
+import BlogList from "./components/BlogList"
+import BlogDetail from "./components/BlogDetail"
+import CreateBlogForm from "./components/CreateBlogForm"
+import { Blog } from "./types/blog"
 
-function App() {
-  const [count, setCount] = useState(0)
+export default function App() {
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+
+  const { data: blogs, isLoading, error } = useQuery({
+    queryKey: ["blogs"],
+    queryFn: getBlogs,
+  })
+
+  if (isLoading) return <p>Loading blogs...</p>
+  if (error || !blogs) return <p>Error loading blogs</p>
+
+  const selectedBlog: Blog | undefined =
+    blogs.find(b => b.id === selectedId) ?? blogs[0]
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <div className="min-h-screen bg-gray-100 p-6">
+      <div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-1">
+          <CreateBlogForm onCreated={setSelectedId} />
+          <BlogList blogs={blogs} onSelect={setSelectedId} />
+        </div>
+        <div className="lg:col-span-2">
+          <BlogDetail blog={selectedBlog} />
+        </div>
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    </div>
   )
-}
 
-export default App
+}
